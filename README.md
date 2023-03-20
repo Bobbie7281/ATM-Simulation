@@ -7,6 +7,7 @@ On start up the app will give you three options which are:
 3.ATM
 
 **1 Register:**
+
 First you have to register a user. In this form you have to insert the general information about the user like Name, Surname, Address Contact Number ecc.... Once you entered all the neccessary data press the Insert data button and all the data will be saved in the database.
 
 The Database consists of three tables which are the following:
