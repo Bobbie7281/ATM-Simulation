@@ -1,10 +1,9 @@
 ﻿using MySql.Data.MySqlClient;
 using System.Data;
-using System.Net;
-using System.Net.Mail;
 
 namespace ATM_Simulation
 {
+
     public class AtmDataBase
     {
         MySqlConnection connection = new();
@@ -12,7 +11,7 @@ namespace ATM_Simulation
         readonly MySqlDataAdapter adapter = new();
         readonly Random pin = new();
         readonly string connectionString = "Server=localhost;Database=atmdb;Uid=root;Pwd=MyData7777!!";
-        //Test
+
         string customerId = "";
         string customerName = "";
         string customerSurname = "";
@@ -154,6 +153,10 @@ namespace ATM_Simulation
             get { return amountWithdrawn; }
         }
 
+        /// <summary>
+        /// This method checks the connection with the database.
+        /// </summary>
+        /// <returns>returns true if connection is successful returns false if otherwise</returns>
         public bool CheckConnection()
         {
             bool connectionStatus;
@@ -171,24 +174,39 @@ namespace ATM_Simulation
             }
             return connectionStatus;
         }
+
+        /// <summary>
+        /// This method will set the properties of the class with the new data passed as parameters only if the Id card number is not already in use .
+        /// </summary>
+        /// <param name="idCard">Id card number must be unique</param>
+        /// <param name="name"></param>
+        /// <param name="surname"></param>
+        /// <param name="contactNumber"></param>
+        /// <param name="address"></param>
+        /// <param name="emailAddress"></param>
+        /// <param name="accountNumber"></param>
+        /// <param name="accountBalance"></param>
+        /// <returns>It returns true if same id card is encountered or returns false if the Id card doesn't exist.</returns>
         public bool NewRegistrationFormDetails(string idCard, string name, string surname, string contactNumber, string address, string emailAddress, string accountNumber, int accountBalance)
         {
             Int64 duplicateData = 0;
             bool doubleData;
-
+            //This sql command will check if the id card for the new registration already exists in the database
             command = new MySqlCommand("check_for_duplicate_id", connection);
             command.Parameters.AddWithValue("@idCard", idCard);
             command.CommandType = CommandType.StoredProcedure;
 
             try
             {
+                //duplicateData will hold the number returned from the query. The number represents the amount of Id card numbers found with the same number
                 duplicateData = (Int64)command.ExecuteScalar();
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
-
+            //if duplicateData is 0 it means that the Id card number for the new registration doesn't exist in the database,
+            //so the program can proceed with the rest of the code.
             if (duplicateData == 0)
             {
                 doubleData = false;
@@ -209,6 +227,10 @@ namespace ATM_Simulation
             }
             return doubleData;
         }
+        /// <summary>
+        /// This method will insert all the new data in the client_information table.
+        /// </summary>
+        /// <returns>Returns true if successfull or returns false if an error is encountered.</returns>
         public bool InsertClientInformation()
         {
             bool executionResult;
@@ -216,12 +238,16 @@ namespace ATM_Simulation
 
             do
             {
+                //a pin number from 1000 to 9999 is randomly generated 
                 int pinNumber = pin.Next(1000, 9999);
 
+                //the pin number is passed to the following sql command to check if it already exists
                 command = new MySqlCommand("check_for_duplicate_pins", connection);
                 command.Parameters.AddWithValue("@pinNum", pinNumber);
                 command.CommandType = CommandType.StoredProcedure;
 
+                //if the result of the query is bigger than 0, it means that the pin number already exist and matchingData is set to true,
+                //else the pin number is saved
                 if ((Int64)command.ExecuteScalar() > 0)
                 {
                     matchingData = true;
@@ -232,7 +258,7 @@ namespace ATM_Simulation
                     CustomerPinNumber = pinNumber;
                 }
             }
-            while (matchingData);
+            while (matchingData);//The do while loop will keep on looping until a unique pin number is generated.
 
             command = new MySqlCommand("insert_client_info", connection);
             command.CommandType = CommandType.StoredProcedure;
@@ -257,6 +283,11 @@ namespace ATM_Simulation
             }
             return executionResult;
         }
+
+        /// <summary>
+        /// This method will insert the data in the account_information table.
+        /// </summary>
+        /// <returns>Returns true if successfull or returns false if an error is encountered.</returns>
         public bool InsertClientAccountInformation()
         {
             bool executionResult;
@@ -279,6 +310,13 @@ namespace ATM_Simulation
             }
             return executionResult;
         }
+
+        /// <summary>
+        /// This method will insert all the transaction records in the transaction_records table.
+        /// </summary>
+        /// <param name="deposit">Set to true if its a deposit,set false if otherwise</param>
+        /// <param name="withraw">Set to true if its a withdraw,set false if otherwise</param>
+        /// <returns>Returns true if successfull or returns false if an error is encountered</returns>
         public bool InsertTransactionRecord(bool deposit, bool withraw)
         {
             bool executionResult;
@@ -309,6 +347,11 @@ namespace ATM_Simulation
             }
             return executionResult;
         }
+
+        /// <summary>
+        /// This method will get the client id from the client_information table and sets the Id property of the class.
+        /// </summary>
+        /// <returns>Returns true if successfull or returns false if an error is encountered</returns>
         public bool SaveClientUniqueId()
         {
             bool executionResult;
@@ -329,6 +372,13 @@ namespace ATM_Simulation
             }
             return executionResult;
         }
+
+        /// <summary>
+        /// Checks whether the id and pinNumber belongs to one user
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="pinNumber"></param>
+        /// <returns>true if successfull</returns>
         public bool VerifyIdWithPinNumber(int id, int pinNumber)
         {
             bool verification;
@@ -363,6 +413,12 @@ namespace ATM_Simulation
             }
             return verification;
         }
+
+        /// <summary>
+        /// This method withdraws money from the account.
+        /// </summary>
+        /// <param name="amount">Amount of money to withdraw</param>
+        /// <returns>Returns true if withdrawal is successful. Returns false if no funds are availabe or an error was encountered</returns>
         public bool Withdrawal(int amount)
         {
             bool executionResult;
@@ -399,6 +455,12 @@ namespace ATM_Simulation
             }
             return executionResult;
         }
+
+        /// <summary>
+        /// This method deposits money in the account.
+        /// </summary>
+        /// <param name="amount">Amount of money to be deposited</param>
+        /// <returns>Returns true if deposit is successful. Returns false if an error was encountered</returns>
         public bool Deposit(int amount)
         {
             bool executionResult;
@@ -421,6 +483,11 @@ namespace ATM_Simulation
             }
             return executionResult;
         }
+
+        /// <summary>
+        /// This method displays the last five transactions 
+        /// </summary>
+        /// <returns>returns a dataTable</returns>
         public DataTable GetLastFiveTransactions()
         {
             DataTable dt = new();
@@ -435,6 +502,10 @@ namespace ATM_Simulation
 
             return dt;
         }
+        /// <summary>
+        /// This method displays the total account balance
+        /// </summary>
+        /// <returns>Returns true if successful and returns false if otherwise</returns>
         public bool GetCurrentBalance()
         {
             bool executionResult;
@@ -456,6 +527,12 @@ namespace ATM_Simulation
 
             return executionResult;
         }
+
+        /// <summary>
+        /// Gets the data of a particular column. The property Id needs to be set by calling SaveClientUniqueId method before this method is called 
+        /// </summary>
+        /// <param name="columnName"></param>
+        /// <returns>returns the column data</returns>
         public string GetColumnData(string columnName)
         {
             string? columnData;
@@ -471,6 +548,10 @@ namespace ATM_Simulation
 
             return columnData;
         }
+        /// <summary>
+        /// This method updates the information of a client in the client_information table 
+        /// </summary>
+        /// <returns>Returns true if successful or returns false if otherwise</returns>
         public bool UpdateGeneralInformation()
         {
             bool executionResult;
