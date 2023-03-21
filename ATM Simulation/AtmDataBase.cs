@@ -12,7 +12,7 @@ namespace ATM_Simulation
         readonly MySqlDataAdapter adapter = new();
         readonly Random pin = new();
         readonly string connectionString = "Server=localhost;Database=atmdb;Uid=root;Pwd=MyData7777!!";
-
+        //Test
         string customerId = "";
         string customerName = "";
         string customerSurname = "";
